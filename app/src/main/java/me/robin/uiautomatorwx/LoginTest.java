@@ -5,10 +5,7 @@ import android.app.Activity;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
+import android.widget.*;
 import com.robotium.solo.SoloExt;
 import me.robin.uiautomatorwx.util.PositionUtils;
 import org.junit.After;
@@ -76,6 +73,25 @@ public class LoginTest extends ActivityInstrumentationTestCase2 {
         }
         this.solo.sleep(10000);
     }
+
+
+    @Test
+    public void testMoments() {
+        this.solo.sleep(10000);
+        this.solo.clickOnText("发现");
+        this.solo.clickOnText("朋友圈");
+        this.solo.sleep(2000);
+        RelativeLayout moreClick = this.solo.getViewByDesc("更多功能按钮", RelativeLayout.class);
+        if (null != moreClick) {
+            this.solo.clickLongOnView(moreClick, 2000);
+            EditText editText = this.solo.getEditText("这一刻的想法...");
+            this.solo.enterText(editText, "中文测试 \r\npost by robotium!");
+            TextView textView = this.solo.getText("发送");
+            this.solo.clickOnView(textView);
+        }
+        this.solo.sleep(10000);
+    }
+
 
     @Override
     @After
