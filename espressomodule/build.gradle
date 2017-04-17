@@ -3,18 +3,22 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 25
     buildToolsVersion "23.0.1"
+
     defaultConfig {
-        applicationId "me.robin.uiautomatorwx"
         minSdkVersion 16
         maxSdkVersion 23
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "android.test.InstrumentationTestRunner"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
     }
+
     lintOptions {
         abortOnError false
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -24,7 +28,9 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.jayway.android.robotium:robotium-solo:5.6.3'
-    compile 'junit:junit:4.12'
+    compile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'javax.annotation', module: 'javax.annotation-api'
+    })
 }
