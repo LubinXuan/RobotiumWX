@@ -23,14 +23,8 @@ public class UserSearchIdlingResource implements IdlingResource {
 
     private ResourceCallback resourceCallback;
 
-    private final AtomicInteger type;
-
-    private final long initTime;
-
-    public UserSearchIdlingResource(ActivityTestRule<Activity> testRule, AtomicInteger type) {
+    public UserSearchIdlingResource(ActivityTestRule<Activity> testRule) {
         this.testRule = testRule;
-        this.type = type;
-        this.initTime = System.currentTimeMillis();
     }
 
     @Override
@@ -42,8 +36,13 @@ public class UserSearchIdlingResource implements IdlingResource {
     public boolean isIdleNow() {
         Activity activity = getActivityInstance();
         if (null != this.resourceCallback && null != activity) {
-            if ("com.tencent.mm.plugin.profile.ui.ContactInfoUI".equals(activity.getClass().getName())) {
-                type.set(1);
+            String className = activity.getClass().getName();
+            if ("com.tencent.mm.plugin.profile.ui.ContactInfoUI".equals(className)) {
+                Log.i(WxTestEspresso.TAG, "检索完成,找到目标");
+                this.resourceCallback.onTransitionToIdle();
+                return true;
+            }
+            if (className.startsWith("com.tencent.mm.ui.chatting")) {
                 Log.i(WxTestEspresso.TAG, "检索完成,找到目标");
                 this.resourceCallback.onTransitionToIdle();
                 return true;
@@ -58,21 +57,11 @@ public class UserSearchIdlingResource implements IdlingResource {
     }
 
     private Activity getActivityInstance() {
-        try {
-            testRule.runOnUiThread(new Runnable() {
-                public void run() {
-                    Collection<Activity> resumedActivities = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED);
-                    for (Activity act : resumedActivities) {
-                        Log.d(WxTestEspresso.TAG, "Your current activity: " + act.getClass().getName());
-                        currentActivity = act;
-                        break;
-                    }
-                }
-            });
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
+        Collection<Activity> resumedActivities = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED);
+        for (Activity act : resumedActivities) {
+            Log.d(WxTestEspresso.TAG, "THREAD:" + Thread.currentThread() + " Your current activity: " + act.getClass().getName());
+            return act;
         }
-
-        return currentActivity;
+        return null;
     }
 }

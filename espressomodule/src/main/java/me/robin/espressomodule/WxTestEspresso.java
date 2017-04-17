@@ -1,10 +1,14 @@
 package me.robin.espressomodule;
 
 import android.app.Activity;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
+import android.support.test.espresso.FailureHandler;
 import android.support.test.espresso.IdlingResource;
+import android.support.test.espresso.ViewInteraction;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.*;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -19,8 +23,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.*;
@@ -37,6 +39,8 @@ public class WxTestEspresso {
     // 对应re-sign.jar生成出来的信息框里的两个值
     private List<IdlingResource> idlingResourceList = new ArrayList<>(32);
 
+    UiDevice device;
+
     static {
         try {
             launchActivityClass = (Class<Activity>) Class.forName("com.tencent.mm.ui.LauncherUI");
@@ -52,6 +56,7 @@ public class WxTestEspresso {
     @Before
     public void setUp() {
         Log.i(TAG, "测试任务启动");
+        device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
 
     @Test
@@ -67,42 +72,47 @@ public class WxTestEspresso {
 
     @Test
     public void sendMessage() throws Exception {
-        String searchText = "18969049096";
-        onView(allOf(withContentDescription("更多功能按钮"), isDisplayed())).perform(click());
-        onView(allOf(withText("添加朋友"), isDisplayed())).perform(click());
-        onView(allOf(withText("微信号/QQ号/手机号"), isDisplayed())).perform(click());
-        onView(allOf(withHint("搜索"), isDisplayed())).perform(replaceText(searchText));
+        int messages = 10;
+        IdlingResource idlingResource = new UserSearchIdlingResource(mActivityRule);
+        for (int i = 0; i < messages; i++) {
+            Log.i(TAG, "THREAD:" + Thread.currentThread());
+            String searchText = "420027600";
+            onView(allOf(withContentDescription("更多功能按钮"), isDisplayed())).perform(click());
+            onView(allOf(withText("添加朋友"), isDisplayed())).perform(click());
+            onView(allOf(withText("微信号/QQ号/手机号"), isDisplayed())).perform(click());
+            onView(allOf(withHint("搜索"), isDisplayed())).perform(replaceText(searchText));
 
 
-        onView(allOf(withText("搜索:" + searchText), isDisplayed())).perform(click());
-
-        AtomicInteger type = new AtomicInteger(0);
-
-        register(new UserSearchIdlingResource(mActivityRule, type));
-
-        switch (type.get()) {
-            case 1:
-                _sendMessage();
-                break;
+            onView(allOf(withText("搜索:" + searchText), isDisplayed())).perform(click());
+            Espresso.registerIdlingResources(idlingResource);
+            _sendMessage(idlingResource, i);
+            Thread.sleep(1000);
         }
-
     }
 
-    private void _sendMessage() {
-        onView(allOf(withText("发消息"), isDisplayed())).perform(click());
+    private void _sendMessage(IdlingResource idlingResource, int i) throws UiObjectNotFoundException {
+        //onView(allOf(withText("发消息"), isDisplayed())).perform(click());
+
+        UiObject openChat = device.findObject(new UiSelector().text("发消息"));
+
+        if (openChat.exists()) {
+            openChat.click();
+        }
 
         onView(allOf(new TypeSafeMatcher<View>() {
             @Override
             protected boolean matchesSafely(View item) {
-                return item.getClass().equals(EditText.class);
+                return item instanceof EditText;
             }
 
             @Override
             public void describeTo(Description description) {
                 description.appendText("withType:" + EditText.class);
             }
-        }, isDisplayed())).perform(replaceText("消息发送"));
+        }, isDisplayed())).perform(replaceText("消息发送:" + i));
         onView(allOf(withText("发送"), isDisplayed())).perform(click());
+        Espresso.unregisterIdlingResources(idlingResource);
+        Espresso.pressBack();
     }
 
     private void register(IdlingResource idlingResource) {
@@ -111,10 +121,11 @@ public class WxTestEspresso {
     }
 
     @After
-    public void setDown() {
+    public void setDown() throws InterruptedException {
         if (idlingResourceList.isEmpty()) {
             return;
         }
         Espresso.unregisterIdlingResources(idlingResourceList.toArray(new IdlingResource[idlingResourceList.size()]));
+        Thread.sleep(10000);
     }
 }

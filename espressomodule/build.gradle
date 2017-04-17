@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 18
         maxSdkVersion 23
         targetSdkVersion 23
         versionCode 1
@@ -33,4 +33,5 @@ dependencies {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'javax.annotation', module: 'javax.annotation-api'
     })
+    compile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
 }
