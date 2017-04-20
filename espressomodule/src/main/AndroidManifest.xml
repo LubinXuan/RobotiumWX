@@ -10,7 +10,7 @@
     <application android:allowBackup="true"
                  android:label="@string/app_name"
                  android:supportsRtl="true">
-        <receiver android:name="me.robin.espressomodule.ContactBroadcastReceiver">
+        <receiver android:name="me.robin.espressomodule.ContactBroadcastReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="me.robin.espressomodule.ContactBroadcastReceiver"/>
             </intent-filter>
