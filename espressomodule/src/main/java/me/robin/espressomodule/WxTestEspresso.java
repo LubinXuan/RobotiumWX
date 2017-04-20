@@ -3,18 +3,14 @@ package me.robin.espressomodule;
 import android.app.Activity;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
-import android.support.test.espresso.FailureHandler;
 import android.support.test.espresso.IdlingResource;
-import android.support.test.espresso.ViewInteraction;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.*;
+import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
-import android.view.View;
-import android.widget.EditText;
-import me.robin.espressomodule.idle.UserSearchIdlingResource;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
+import me.robin.espressomodule.actions.AddMobileAndUpdateWxRelationAction;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,11 +19,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.*;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static org.hamcrest.core.AllOf.allOf;
 
 /**
  * Created by xuanlubin on 2017/4/17.
@@ -38,8 +29,6 @@ public class WxTestEspresso {
     private static Class<Activity> launchActivityClass;
     // 对应re-sign.jar生成出来的信息框里的两个值
     private List<IdlingResource> idlingResourceList = new ArrayList<>(32);
-
-    UiDevice device;
 
     static {
         try {
@@ -53,66 +42,27 @@ public class WxTestEspresso {
     @Rule
     public ActivityTestRule<Activity> mActivityRule = new ActivityTestRule<>(launchActivityClass);
 
+    private Provider provider;
+
     @Before
     public void setUp() {
         Log.i(TAG, "测试任务启动");
-        device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        this.provider = new Provider(TAG, InstrumentationRegistry.getInstrumentation(), device, mActivityRule);
     }
 
     @Test
-    public void postMoments() {
-        // Type text and then press the button.
-        onView(allOf(withText("发现"), isDisplayed())).perform(click());
-        onView(allOf(withText("朋友圈"), isDisplayed())).perform(click());
-        onView(allOf(withContentDescription("更多功能按钮"), isDisplayed())).perform(longClick());
-        onView(allOf(withHint("这一刻的想法..."), isDisplayed()))
-                .perform(replaceText("中文测试 \r\npost by espresso!"));
-        onView(allOf(withText("发送"), isDisplayed())).perform(click());
-    }
+    public void testMain() throws Exception {
+        /*while (true) {
 
-    @Test
-    public void sendMessage() throws Exception {
-        int messages = 10;
-        IdlingResource idlingResource = new UserSearchIdlingResource(mActivityRule);
-        for (int i = 0; i < messages; i++) {
-            Log.i(TAG, "THREAD:" + Thread.currentThread());
-            String searchText = "420027600";
-            onView(allOf(withContentDescription("更多功能按钮"), isDisplayed())).perform(click());
-            onView(allOf(withText("添加朋友"), isDisplayed())).perform(click());
-            onView(allOf(withText("微信号/QQ号/手机号"), isDisplayed())).perform(click());
-            onView(allOf(withHint("搜索"), isDisplayed())).perform(replaceText(searchText));
-
-
-            onView(allOf(withText("搜索:" + searchText), isDisplayed())).perform(click());
-            Espresso.registerIdlingResources(idlingResource);
-            _sendMessage(idlingResource, i);
-            Thread.sleep(1000);
+        }*/
+        JSONObject jsonObject = new JSONObject();
+        JSONArray numbers = new JSONArray();
+        for (int i = 0; i < 10; i++) {
+            numbers.put("12345678" + i);
         }
-    }
-
-    private void _sendMessage(IdlingResource idlingResource, int i) throws UiObjectNotFoundException {
-        //onView(allOf(withText("发消息"), isDisplayed())).perform(click());
-
-        UiObject openChat = device.findObject(new UiSelector().text("发消息"));
-
-        if (openChat.exists()) {
-            openChat.click();
-        }
-
-        onView(allOf(new TypeSafeMatcher<View>() {
-            @Override
-            protected boolean matchesSafely(View item) {
-                return item instanceof EditText;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("withType:" + EditText.class);
-            }
-        }, isDisplayed())).perform(replaceText("消息发送:" + i));
-        onView(allOf(withText("发送"), isDisplayed())).perform(click());
-        Espresso.unregisterIdlingResources(idlingResource);
-        Espresso.pressBack();
+        jsonObject.put("numbers", numbers);
+        new AddMobileAndUpdateWxRelationAction().process(jsonObject, provider);
     }
 
     private void register(IdlingResource idlingResource) {
