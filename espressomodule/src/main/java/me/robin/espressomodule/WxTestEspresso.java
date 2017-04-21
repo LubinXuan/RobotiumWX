@@ -58,9 +58,9 @@ public class WxTestEspresso {
         }*/
         JSONObject jsonObject = new JSONObject();
         JSONArray numbers = new JSONArray();
-        for (int i = 0; i < 10; i++) {
-            numbers.add("12345678" + i);
-        }
+        numbers.add("18969049096");
+        numbers.add("18258837523");
+        numbers.add("13345859934");
         jsonObject.put("numbers", numbers);
         new AddMobileAndUpdateWxRelationAction().process(jsonObject, provider);
     }
