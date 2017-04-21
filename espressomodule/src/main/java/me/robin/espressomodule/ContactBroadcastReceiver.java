@@ -6,30 +6,23 @@ import android.net.Uri;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.util.Log;
-import org.json.JSONArray;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by xuanlubin on 2017/4/20.
  */
 public class ContactBroadcastReceiver extends BroadcastReceiver {
 
-    private AtomicLong uid = new AtomicLong(0);
-
-
     @Override
     public void onReceive(Context context, Intent intent) {
-        String date = "**" + new SimpleDateFormat("MMddHHmm", Locale.CHINA).format(new Date());
         try {
             clearOld(context.getContentResolver());
-            JSONArray numbers = new JSONArray(intent.getStringExtra("numbers"));
-            for (int i = 0; i < numbers.length(); i++) {
-                addContact(context.getContentResolver(), date, numbers.getString(i));
+            JSONArray numbers = JSON.parseArray(intent.getStringExtra("numbers"));
+            for (int i = 0; i < numbers.size(); i++) {
+                addContact(context.getContentResolver(), numbers.getString(i));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -82,7 +75,7 @@ public class ContactBroadcastReceiver extends BroadcastReceiver {
         contentResolver.applyBatch(ContactsContract.AUTHORITY, ops);
     }
 
-    private void addContact(ContentResolver contentResolver, String date, String mobile) {
+    private void addContact(ContentResolver contentResolver, String mobile) {
         // 创建一个空的ContentValues
         ContentValues values = new ContentValues();
         // 向RawContacts.CONTENT_URI执行一个空值插入，
@@ -95,7 +88,7 @@ public class ContactBroadcastReceiver extends BroadcastReceiver {
         // 设置内容类型
         values.put(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
         // 设置联系人名字
-        values.put(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, date + "_" + uid.incrementAndGet());
+        values.put(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, "**" + mobile);
         // 向联系人URI添加联系人名字
         contentResolver.insert(ContactsContract.Data.CONTENT_URI, values);
         values.clear();

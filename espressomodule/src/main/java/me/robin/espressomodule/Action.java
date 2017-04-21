@@ -1,6 +1,6 @@
 package me.robin.espressomodule;
 
-import org.json.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 
 /**
  * Created by xuanlubin on 2017/4/20.

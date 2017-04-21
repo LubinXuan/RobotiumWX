@@ -1,8 +1,8 @@
 package me.robin.espressomodule.actions;
 
+import com.alibaba.fastjson.JSONObject;
 import me.robin.espressomodule.Action;
 import me.robin.espressomodule.Provider;
-import org.json.JSONObject;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;

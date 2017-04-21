@@ -8,9 +8,9 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import me.robin.espressomodule.actions.AddMobileAndUpdateWxRelationAction;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,7 +59,7 @@ public class WxTestEspresso {
         JSONObject jsonObject = new JSONObject();
         JSONArray numbers = new JSONArray();
         for (int i = 0; i < 10; i++) {
-            numbers.put("12345678" + i);
+            numbers.add("12345678" + i);
         }
         jsonObject.put("numbers", numbers);
         new AddMobileAndUpdateWxRelationAction().process(jsonObject, provider);
