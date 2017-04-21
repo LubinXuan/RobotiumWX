@@ -112,15 +112,8 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
         Espresso.registerIdlingResources(idlingResource);
         try {
             ListAdapter listAdapter = listViewAtomicReference.get().getAdapter();
-            Log.i(WxTestEspresso.TAG, "ListAdapterType:" + listAdapter.getClass());
             int count = listAdapter.getCount();
-            Field[] fields = listAdapter.getClass().getDeclaredFields();
-            for (Field field : fields) {
-                Log.i(WxTestEspresso.TAG, "字段:" + field.getGenericType());
-            }
-
             List<String> dataArray = new ArrayList<>(count);
-
             for (int i = 0; i < count; i++) {
                 LinearLayout layout = (LinearLayout) listAdapter.getView(i, null, listViewAtomicReference.get());
                 Object item = listAdapter.getItem(i);
@@ -131,7 +124,6 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
                 dataArray.add(mobile + ":" + wxName);
                 Log.i(WxTestEspresso.TAG, mobile + ":" + wxName + "\r\n" + JSON.toJSONString(item));
             }
-
 
             for (int i = 0; i < count; i++) {
                 String data = dataArray.get(i);
