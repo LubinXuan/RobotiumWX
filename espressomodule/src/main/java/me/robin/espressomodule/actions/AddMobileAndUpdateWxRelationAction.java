@@ -4,13 +4,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.DataSetObserver;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
 import android.support.test.espresso.ViewInteraction;
-import android.support.test.espresso.action.Swipe;
-import android.support.test.espresso.action.Swipes;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -25,6 +22,8 @@ import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +32,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.scrollTo;
-import static android.support.test.espresso.action.ViewActions.swipeUp;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static org.hamcrest.core.AllOf.allOf;
@@ -119,16 +116,28 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
                 Log.i(WxTestEspresso.TAG, "字段:" + field.getGenericType());
             }
 
+            List<String> dataArray = new ArrayList<>(count);
 
             for (int i = 0; i < count; i++) {
                 LinearLayout layout = (LinearLayout) listAdapter.getView(i, null, listViewAtomicReference.get());
                 Object item = listAdapter.getItem(i);
                 LinearLayout clickAble = (LinearLayout) layout.getChildAt(layout.getChildCount() - 1);
-                layout = (LinearLayout) clickAble .getChildAt(1);
+                layout = (LinearLayout) clickAble.getChildAt(1);
                 CharSequence mobile = ((TextView) layout.getChildAt(0)).getText();
                 CharSequence wxName = ((TextView) layout.getChildAt(1)).getText();
+                dataArray.add(mobile + ":" + wxName);
                 Log.i(WxTestEspresso.TAG, mobile + ":" + wxName + "\r\n" + JSON.toJSONString(item));
             }
+
+
+            for (int i = 0; i < count; i++) {
+                String data = dataArray.get(i);
+                Log.i(WxTestEspresso.TAG, "data:" + data);
+                onData(anything()).atPosition(i).perform(click());
+                Utils.sleep(2000);
+                Espresso.pressBack();
+            }
+
         } finally {
             Espresso.unregisterIdlingResources(idlingResource);
         }
