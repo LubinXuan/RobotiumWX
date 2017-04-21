@@ -50,9 +50,11 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
     @Override
     public void process(JSONObject taskDefine, final Provider provider) throws Exception {
         final ContactModifyBroadcastReceiver receiver = new ContactModifyBroadcastReceiver();
+        final ContactBroadcastReceiver contactBroadcastReceiver = new ContactBroadcastReceiver();
         final String filter = ContactModifyBroadcastReceiver.class.getName() + UUID.randomUUID().toString().replace("-", "");
         Context applicationCtx = InstrumentationRegistry.getTargetContext();
         try {
+            applicationCtx.registerReceiver(contactBroadcastReceiver,new IntentFilter(ContactBroadcastReceiver.class.getName()));
             IntentFilter intentFilter = new IntentFilter(filter);
             applicationCtx.registerReceiver(receiver, intentFilter);
             JSONArray numbers = taskDefine.getJSONArray("numbers");
@@ -66,6 +68,7 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
         } catch (Exception e) {
             Log.e(WxTestEspresso.TAG, "号码列表读取失败", e);
         } finally {
+            applicationCtx.unregisterReceiver(contactBroadcastReceiver);
             applicationCtx.unregisterReceiver(receiver);
         }
     }
