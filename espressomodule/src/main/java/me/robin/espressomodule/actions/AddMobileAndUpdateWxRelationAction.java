@@ -54,7 +54,7 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
         final String filter = ContactModifyBroadcastReceiver.class.getName() + UUID.randomUUID().toString().replace("-", "");
         Context applicationCtx = InstrumentationRegistry.getTargetContext();
         try {
-            applicationCtx.registerReceiver(contactBroadcastReceiver,new IntentFilter(ContactBroadcastReceiver.class.getName()));
+            applicationCtx.registerReceiver(contactBroadcastReceiver, new IntentFilter(ContactBroadcastReceiver.class.getName()));
             IntentFilter intentFilter = new IntentFilter(filter);
             applicationCtx.registerReceiver(receiver, intentFilter);
             JSONArray numbers = taskDefine.getJSONArray("numbers");
@@ -105,62 +105,26 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
                 description.appendText("withType:" + ListView.class);
             }
         }, isDisplayed())).check(matches(isDisplayed()));
-
-
-        ListIdlingResource idlingResource = new ListIdlingResource(listViewAtomicReference.get());
-
-        Espresso.registerIdlingResources(idlingResource);
-        try {
-            ListAdapter listAdapter = listViewAtomicReference.get().getAdapter();
-            int count = listAdapter.getCount();
-            List<String> dataArray = new ArrayList<>(count);
-            for (int i = 0; i < count; i++) {
-                LinearLayout layout = (LinearLayout) listAdapter.getView(i, null, listViewAtomicReference.get());
-                Object item = listAdapter.getItem(i);
-                LinearLayout clickAble = (LinearLayout) layout.getChildAt(layout.getChildCount() - 1);
-                layout = (LinearLayout) clickAble.getChildAt(1);
-                CharSequence mobile = ((TextView) layout.getChildAt(0)).getText();
-                CharSequence wxName = ((TextView) layout.getChildAt(1)).getText();
-                dataArray.add(mobile + ":" + wxName);
-                Log.i(WxTestEspresso.TAG, mobile + ":" + wxName + "\r\n" + JSON.toJSONString(item));
-            }
-
-            for (int i = 0; i < count; i++) {
-                String data = dataArray.get(i);
-                Log.i(WxTestEspresso.TAG, "data:" + data);
-                onData(anything()).atPosition(i).perform(click());
-                Utils.sleep(2000);
-                Espresso.pressBack();
-            }
-
-        } finally {
-            Espresso.unregisterIdlingResources(idlingResource);
-        }
-    }
-
-    class ListIdlingResource implements IdlingResource {
-
-        IdlingResource.ResourceCallback callback;
-
-        ListView listView;
-
-        public ListIdlingResource(ListView listView) {
-            this.listView = listView;
+        ListAdapter listAdapter = listViewAtomicReference.get().getAdapter();
+        int count = listAdapter.getCount();
+        List<String> dataArray = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            LinearLayout layout = (LinearLayout) listAdapter.getView(i, null, listViewAtomicReference.get());
+            Object item = listAdapter.getItem(i);
+            LinearLayout clickAble = (LinearLayout) layout.getChildAt(layout.getChildCount() - 1);
+            layout = (LinearLayout) clickAble.getChildAt(1);
+            CharSequence mobile = ((TextView) layout.getChildAt(0)).getText();
+            CharSequence wxName = ((TextView) layout.getChildAt(1)).getText();
+            dataArray.add(mobile + ":" + wxName);
+            Log.i(WxTestEspresso.TAG, mobile + ":" + wxName + "\r\n" + JSON.toJSONString(item));
         }
 
-        @Override
-        public String getName() {
-            return UUID.randomUUID().toString();
-        }
-
-        @Override
-        public boolean isIdleNow() {
-            return listView.getAdapter() != null;
-        }
-
-        @Override
-        public void registerIdleTransitionCallback(IdlingResource.ResourceCallback callback) {
-            this.callback = callback;
+        for (int i = 0; i < count; i++) {
+            String data = dataArray.get(i);
+            Log.i(WxTestEspresso.TAG, "data:" + data);
+            onData(anything()).atPosition(i).perform(click());
+            Utils.sleep(2000);
+            Espresso.pressBack();
         }
     }
 
