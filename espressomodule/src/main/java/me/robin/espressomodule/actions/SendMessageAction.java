@@ -26,7 +26,7 @@ import static org.hamcrest.core.AllOf.allOf;
 /**
  * Created by xuanlubin on 2017/4/20.
  */
-public class SendMessageAction implements Action {
+public class SendMessageAction implements Action<JSONObject> {
 
     @Override
     public boolean isUiRequired() {
@@ -34,16 +34,17 @@ public class SendMessageAction implements Action {
     }
 
     @Override
-    public void process(JSONObject taskDefine, Provider provider) throws Exception {
+    public JSONObject process(JSONObject taskDefine, Provider provider) throws Exception {
         Log.i(provider.getLogTag(), "THREAD:" + Thread.currentThread());
         JSONArray numbers = taskDefine.getJSONArray("numbers");
         final String message = taskDefine.getString("message");
         long loopInterval = taskDefine.getIntValue("interval");
         loopInterval = loopInterval > 0 ? loopInterval : 1000;
         final AtomicBoolean reenter = new AtomicBoolean(true);
+        final JSONObject ret = new JSONObject();
         for (int i = 0; i < numbers.size(); i++) {
 
-            String searchText = numbers.getString(i);
+            final String searchText = numbers.getString(i);
 
             if (reenter.get()) {
                 onView(allOf(withContentDescription("更多功能按钮"), isDisplayed())).perform(click());
@@ -96,12 +97,14 @@ public class SendMessageAction implements Action {
                     } catch (Exception e) {
                         Espresso.pressBack();
                     }
+                    ret.put(searchText,"not in contact");
                     reenter.set(false);
                 }
             }).withFailure(new Promise() {
                 @Override
                 public void service() {
                     onView(allOf(withText("该用户不存在"), isDisplayed())).check(matches(isDisplayed()));
+                    ret.put(searchText,"not found");
                     reenter.set(false);
                 }
             })).run();
@@ -109,5 +112,6 @@ public class SendMessageAction implements Action {
             Utils.sleep(loopInterval);
         }
 
+        return ret;
     }
 }

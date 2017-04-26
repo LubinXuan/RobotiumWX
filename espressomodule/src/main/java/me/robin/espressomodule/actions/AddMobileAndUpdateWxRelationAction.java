@@ -40,7 +40,7 @@ import static org.hamcrest.core.IsAnything.anything;
 /**
  * Created by xuanlubin on 2017/4/20.
  */
-public class AddMobileAndUpdateWxRelationAction implements Action {
+public class AddMobileAndUpdateWxRelationAction implements Action<Boolean> {
 
     @Override
     public boolean isUiRequired() {
@@ -48,7 +48,7 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
     }
 
     @Override
-    public void process(JSONObject taskDefine, final Provider provider) throws Exception {
+    public Boolean process(JSONObject taskDefine, final Provider provider) throws Exception {
         final ContactModifyBroadcastReceiver receiver = new ContactModifyBroadcastReceiver();
         final ContactBroadcastReceiver contactBroadcastReceiver = new ContactBroadcastReceiver();
         final String filter = ContactModifyBroadcastReceiver.class.getName() + UUID.randomUUID().toString().replace("-", "");
@@ -71,6 +71,7 @@ public class AddMobileAndUpdateWxRelationAction implements Action {
             applicationCtx.unregisterReceiver(contactBroadcastReceiver);
             applicationCtx.unregisterReceiver(receiver);
         }
+        return true;
     }
 
     private void startReadMobileWx(final Provider provider) {
