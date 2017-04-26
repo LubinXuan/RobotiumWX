@@ -11,6 +11,7 @@ import android.util.Log;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import me.robin.espressomodule.actions.AddMobileAndUpdateWxRelationAction;
+import me.robin.espressomodule.actions.SendMessageAction;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,10 +60,11 @@ public class WxTestEspresso {
         JSONObject jsonObject = new JSONObject();
         JSONArray numbers = new JSONArray();
         numbers.add("18969049096");
-        numbers.add("18258837523");
         numbers.add("13345859934");
+        numbers.add("18258837523");
         jsonObject.put("numbers", numbers);
-        new AddMobileAndUpdateWxRelationAction().process(jsonObject, provider);
+        jsonObject.put("message","测试消息");
+        new SendMessageAction().process(jsonObject, provider);
     }
 
     private void register(IdlingResource idlingResource) {
