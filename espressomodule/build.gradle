@@ -36,4 +36,5 @@ dependencies {
     compile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
     compile 'com.alibaba:fastjson:1.1.56.android'
     compile 'com.squareup.okhttp3:okhttp:3.7.0'
+    compile 'io.netty:netty-all:4.1.6.Final'
 }
