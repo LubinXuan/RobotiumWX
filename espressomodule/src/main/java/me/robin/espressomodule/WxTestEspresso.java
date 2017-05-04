@@ -1,13 +1,11 @@
 package me.robin.espressomodule;
 
 import android.app.Activity;
-import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
-import android.widget.Toast;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
@@ -20,6 +18,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import me.robin.espressomodule.actions.AddMobileAndUpdateWxRelationAction;
+import me.robin.espressomodule.actions.LoginCheckAction;
 import me.robin.espressomodule.actions.PostMomentsAction;
 import me.robin.espressomodule.actions.SendMessageAction;
 import me.robin.espressomodule.client.CusHeartBeatHandler;
@@ -31,9 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -62,11 +59,17 @@ public class WxTestEspresso {
 
     private Map<String, Action> actionMap = new HashMap<>();
 
+    private LoginCheckAction loginCheckAction;
+
     private NettyClient nettyClient;
 
     private CountDownLatch latch = new CountDownLatch(1);
 
     private String clientId;
+
+    private volatile boolean active = false;
+
+    private volatile boolean register = false;
 
     @Before
     public void setUp() throws InterruptedException {
@@ -83,7 +86,7 @@ public class WxTestEspresso {
             protected void initChannel(SocketChannel ch) throws Exception {
                 ChannelPipeline pipeline = ch.pipeline();
                 pipeline.addLast(new IdleStateHandler(0, 0, 10, TimeUnit.SECONDS));
-                pipeline.addLast(new LengthFieldBasedFrameDecoder(512*1024, 0, 4, -4, 0));
+                pipeline.addLast(new LengthFieldBasedFrameDecoder(512 * 1024, 0, 4, -4, 0));
                 pipeline.addLast("handler", new CusHeartBeatHandler() {
                     @Override
                     protected void handleData(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws IOException {
@@ -91,7 +94,8 @@ public class WxTestEspresso {
                         byteBuf.skipBytes(5);
                         byteBuf.readBytes(data);
                         String content = new String(data);
-                        if (handleTaskData(channelHandlerContext.channel(), content)) {
+                        Utils.showToast("接到指令:" + content);
+                        if (handleTaskData(content)) {
                             nettyClient.close();
                         }
                     }
@@ -104,51 +108,61 @@ public class WxTestEspresso {
 
                     @Override
                     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                        nettyClient.sendRequest(ctx.channel(), "register:" + clientId);
-                        showToast("连接服务器成功");
+                        Utils.showToast("连接服务器成功");
+                        if (!active && register) {
+                            nettyClient.sendRequest("register:" + clientId);
+                        }
                         super.channelActive(ctx);
                     }
 
                     @Override
+                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                        nettyClient.connectDelay(3);
+                    }
+
+                    @Override
                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                        showToast("网络连接异常:" + cause.getLocalizedMessage());
+                        Utils.showToast("网络连接异常:" + cause.getLocalizedMessage());
                         super.exceptionCaught(ctx, cause);
                     }
                 });
             }
         };
 
-        this.nettyClient = new NettyClient(channelInitializer, new NettyClient.NoticeListener() {
+        this.nettyClient = new NettyClient("192.168.5.2", 18080, channelInitializer, new NettyClient.NoticeListener() {
             @Override
             public void notice(String message) {
-                showToast(message);
+                Utils.showToast(message);
             }
         });
+
+        this.loginCheckAction = new LoginCheckAction(this.nettyClient);
+
+        Utils.setmActivityRule(mActivityRule);
+
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (!active) {
+                    Utils.showToast("Client Idle");
+                }
+            }
+        }, 5000, 5000);
+        this.actionMap.put("login", loginCheckAction);
     }
 
     @Test
     public void testMain() throws Exception {
-        this.nettyClient.listen("192.168.5.2", 18080);
+        this.nettyClient.connect();
+        loginCheckAction.process(null, provider);
+        nettyClient.sendRequest("register:" + clientId);
+        this.register = true;
         this.latch.await();
     }
 
-    private void showToast(final String message) {
-        try {
-            final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-            mActivityRule.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-                }
-            });
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-        }
-    }
-
-    private boolean handleTaskData(Channel channel, String content) {
+    private boolean handleTaskData(String content) {
         if (null == content || content.trim().isEmpty()) {
-            showToast("没有获取到任务");
+            Utils.showToast("没有获取到任务");
             return false;
         }
         if ("stop".equals(content)) {
@@ -156,6 +170,7 @@ public class WxTestEspresso {
             return true;
         } else {
             try {
+                this.active = true;
                 JSONObject object = JSON.parseObject(content);
                 String actionType = object.getString("action");
                 Action action = this.actionMap.get(actionType);
@@ -164,26 +179,31 @@ public class WxTestEspresso {
                     try {
                         ret = action.process(object, provider);
                     } catch (Exception e) {
-
+                        Log.e(TAG, "处理异常:" + actionType, e);
+                        throw new RuntimeException(e);
                     } finally {
-                        reportActionResult(channel, object, ret);
+                        reportActionResult(object, ret);
                     }
+                } else {
+                    Utils.showToast("没找到对应指令执行器:" + actionType);
                 }
             } catch (JSONException ignore) {
-                showToast("未知指令:" + content);
+                Utils.showToast("未知指令:" + content);
+            } finally {
+                active = false;
             }
         }
         return false;
     }
 
-    private void reportActionResult(Channel channel, JSONObject action, final Object ret) {
+    private void reportActionResult(JSONObject action, final Object ret) {
         try {
             JSONObject report = new JSONObject();
             report.put("_id", action.getString("_id"));
             report.put("clientId", this.clientId);
             report.put("result", ret);
-            this.nettyClient.sendRequest(channel, report.toJSONString());
-            showToast("任务处理:" + JSON.toJSONString(ret));
+            this.nettyClient.sendRequest(report.toJSONString());
+            Utils.showToast("任务处理:" + JSON.toJSONString(ret));
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }
