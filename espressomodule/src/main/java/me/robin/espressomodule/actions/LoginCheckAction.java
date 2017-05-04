@@ -63,7 +63,6 @@ public class LoginCheckAction implements Action<Boolean> {
             checkPromise.run();
             latch.await();
         } else {
-            Utils.showToast("开始登录");
             onView(withText("更多")).perform(click());
             onView(withText("切换帐号")).perform(click());
             Utils.sleep(5000);
